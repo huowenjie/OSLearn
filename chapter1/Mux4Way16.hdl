@@ -1,0 +1,129 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux4Way16.hdl
+
+/**
+ * 4-way 16-bit multiplexor.
+ * out = a if sel==00
+ *       b if sel==01
+ *       c if sel==10
+ *       d if sel==11
+ */
+
+CHIP Mux4Way16 {
+    IN a[16], b[16], c[16], d[16], sel[2];
+    OUT out[16];
+
+    PARTS:
+		// ~sel & ~sel' & a +
+		// ~sel & sel' & b +
+		// sel & ~sel' & c +
+		// sel & sel' & d
+		
+		// ~sel
+		Not(in = sel[1], out = sel1);
+
+		// ~sel'
+		Not(in = sel[0], out = sel0);
+
+		And(a = sel1, b = sel0, out = ta);
+		And(a = sel1, b = sel[0], out = tb);
+		And(a = sel[1], b = sel0, out = tc);
+		And(a = sel[1], b = sel[0], out = td);
+
+		And16(
+			a[0] = ta,
+			a[1] = ta,
+			a[2] = ta, 
+			a[3] = ta, 
+			a[4] = ta, 
+			a[5] = ta, 
+			a[6] = ta, 
+			a[7] = ta, 
+			a[8] = ta, 
+			a[9] = ta, 
+			a[10] = ta, 
+			a[11] = ta, 
+			a[12] = ta,
+			a[13] = ta,
+			a[14] = ta,
+			a[15] = ta,
+			b[0..15] = a[0..15],
+			out = sa
+		);
+
+		And16(
+			a[0] = tb,
+			a[1] = tb,
+			a[2] = tb, 
+			a[3] = tb, 
+			a[4] = tb, 
+			a[5] = tb, 
+			a[6] = tb, 
+			a[7] = tb, 
+			a[8] = tb, 
+			a[9] = tb, 
+			a[10] = tb, 
+			a[11] = tb, 
+			a[12] = tb,
+			a[13] = tb,
+			a[14] = tb,
+			a[15] = tb,
+			b[0..15] = b[0..15],
+			out = sb
+		);
+		
+		And16(
+			a[0] = tc,
+			a[1] = tc,
+			a[2] = tc, 
+			a[3] = tc, 
+			a[4] = tc, 
+			a[5] = tc, 
+			a[6] = tc, 
+			a[7] = tc, 
+			a[8] = tc, 
+			a[9] = tc, 
+			a[10] = tc, 
+			a[11] = tc, 
+			a[12] = tc,
+			a[13] = tc,
+			a[14] = tc,
+			a[15] = tc,
+			b[0..15] = c[0..15],
+			out = sc
+		);
+		
+		And16(
+			a[0] = td,
+			a[1] = td,
+			a[2] = td, 
+			a[3] = td, 
+			a[4] = td, 
+			a[5] = td, 
+			a[6] = td, 
+			a[7] = td, 
+			a[8] = td, 
+			a[9] = td, 
+			a[10] = td, 
+			a[11] = td, 
+			a[12] = td,
+			a[13] = td,
+			a[14] = td,
+			a[15] = td,
+			b[0..15] = d[0..15],
+			out = sd
+		);
+
+		Or16(a[0..15] = sa, b[0..15] = sb, out = v1);
+		Or16(a[0..15] = v1, b[0..15] = sc, out = v2);
+		Or16(a[0..15] = v2, b[0..15] = sd, out = out);
+}
+
+
+
+
+
+
+

@@ -1,0 +1,9 @@
+CHIP And {
+	IN a, b;
+	OUT out;
+
+	// Not(Nand(a, b))
+	PARTS:
+		Nand(a = a, b = b, out = t);
+		Not(in = t, out = out);
+}

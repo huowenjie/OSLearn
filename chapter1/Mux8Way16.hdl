@@ -1,0 +1,235 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux8Way16.hdl
+
+/**
+ * 8-way 16-bit multiplexor.
+ * out = a if sel==000
+ *       b if sel==001
+ *       etc.
+ *       h if sel==111
+ */
+
+CHIP Mux8Way16 {
+    IN a[16], b[16], c[16], d[16],
+       e[16], f[16], g[16], h[16],
+       sel[3];
+    OUT out[16];
+
+    PARTS:
+		// 000 001 010 011 100 101 110 111
+		Not(in = sel[2], out = sel2);
+		Not(in = sel[1], out = sel1);
+		Not(in = sel[0], out = sel0);
+
+		And(a = sel2, b = sel1, out = tta);
+		And(a = tta, b = sel0, out = ta);
+		
+		And(a = sel2, b = sel1, out = ttb);
+		And(a = ttb, b = sel[0], out = tb);
+		
+		And(a = sel2, b = sel[1], out = ttc);
+		And(a = ttc, b = sel0, out = tc);
+
+		And(a = sel2, b = sel[1], out = ttd);
+		And(a = ttd, b = sel[0], out = td);
+		
+		And(a = sel[2], b = sel1, out = tte);
+		And(a = tte, b = sel0, out = te);
+
+		And(a = sel[2], b = sel1, out = ttf);
+		And(a = ttf, b = sel[0], out = tf);
+		
+		And(a = sel[2], b = sel[1], out = ttg);
+		And(a = ttg, b = sel0, out = tg);
+		
+		And(a = sel[2], b = sel[1], out = tth);
+		And(a = tth, b = sel[0], out = th);
+		
+		And16(
+			a[0] = ta,
+			a[1] = ta,
+			a[2] = ta, 
+			a[3] = ta, 
+			a[4] = ta, 
+			a[5] = ta, 
+			a[6] = ta, 
+			a[7] = ta, 
+			a[8] = ta, 
+			a[9] = ta, 
+			a[10] = ta, 
+			a[11] = ta, 
+			a[12] = ta,
+			a[13] = ta,
+			a[14] = ta,
+			a[15] = ta,
+			b[0..15] = a[0..15],
+			out = sa
+		);
+
+		And16(
+			a[0] = tb,
+			a[1] = tb,
+			a[2] = tb, 
+			a[3] = tb, 
+			a[4] = tb, 
+			a[5] = tb, 
+			a[6] = tb, 
+			a[7] = tb, 
+			a[8] = tb, 
+			a[9] = tb, 
+			a[10] = tb, 
+			a[11] = tb, 
+			a[12] = tb,
+			a[13] = tb,
+			a[14] = tb,
+			a[15] = tb,
+			b[0..15] = b[0..15],
+			out = sb
+		);
+		
+		And16(
+			a[0] = tc,
+			a[1] = tc,
+			a[2] = tc, 
+			a[3] = tc, 
+			a[4] = tc, 
+			a[5] = tc, 
+			a[6] = tc, 
+			a[7] = tc, 
+			a[8] = tc, 
+			a[9] = tc, 
+			a[10] = tc, 
+			a[11] = tc, 
+			a[12] = tc,
+			a[13] = tc,
+			a[14] = tc,
+			a[15] = tc,
+			b[0..15] = c[0..15],
+			out = sc
+		);
+		
+		And16(
+			a[0] = td,
+			a[1] = td,
+			a[2] = td, 
+			a[3] = td, 
+			a[4] = td, 
+			a[5] = td, 
+			a[6] = td, 
+			a[7] = td, 
+			a[8] = td, 
+			a[9] = td, 
+			a[10] = td, 
+			a[11] = td, 
+			a[12] = td,
+			a[13] = td,
+			a[14] = td,
+			a[15] = td,
+			b[0..15] = d[0..15],
+			out = sd
+		);
+		
+		And16(
+			a[0] = te,
+			a[1] = te,
+			a[2] = te, 
+			a[3] = te, 
+			a[4] = te, 
+			a[5] = te, 
+			a[6] = te, 
+			a[7] = te, 
+			a[8] = te, 
+			a[9] = te, 
+			a[10] = te, 
+			a[11] = te, 
+			a[12] = te,
+			a[13] = te,
+			a[14] = te,
+			a[15] = te,
+			b[0..15] = e[0..15],
+			out = se
+		);
+
+		And16(
+			a[0] = tf,
+			a[1] = tf,
+			a[2] = tf, 
+			a[3] = tf, 
+			a[4] = tf, 
+			a[5] = tf, 
+			a[6] = tf, 
+			a[7] = tf, 
+			a[8] = tf, 
+			a[9] = tf, 
+			a[10] = tf, 
+			a[11] = tf, 
+			a[12] = tf,
+			a[13] = tf,
+			a[14] = tf,
+			a[15] = tf,
+			b[0..15] = f[0..15],
+			out = sf
+		);
+		
+		And16(
+			a[0] = tg,
+			a[1] = tg,
+			a[2] = tg, 
+			a[3] = tg, 
+			a[4] = tg, 
+			a[5] = tg, 
+			a[6] = tg, 
+			a[7] = tg, 
+			a[8] = tg, 
+			a[9] = tg, 
+			a[10] = tg, 
+			a[11] = tg, 
+			a[12] = tg,
+			a[13] = tg,
+			a[14] = tg,
+			a[15] = tg,
+			b[0..15] = g[0..15],
+			out = sg
+		);
+		
+		And16(
+			a[0] = th,
+			a[1] = th,
+			a[2] = th, 
+			a[3] = th, 
+			a[4] = th, 
+			a[5] = th, 
+			a[6] = th, 
+			a[7] = th, 
+			a[8] = th, 
+			a[9] = th, 
+			a[10] = th, 
+			a[11] = th, 
+			a[12] = th,
+			a[13] = th,
+			a[14] = th,
+			a[15] = th,
+			b[0..15] = h[0..15],
+			out = sh
+		);
+
+		Or16(a[0..15] = sa, b[0..15] = sb, out = v1);
+		Or16(a[0..15] = v1, b[0..15] = sc, out = v2);
+		Or16(a[0..15] = v2, b[0..15] = sd, out = v3);
+		Or16(a[0..15] = v3, b[0..15] = se, out = v4);
+		Or16(a[0..15] = v4, b[0..15] = sf, out = v5);
+		Or16(a[0..15] = v5, b[0..15] = sg, out = v6);
+		Or16(a[0..15] = v6, b[0..15] = sh, out = out);
+}
+
+
+
+
+
+
+
+
+
+
