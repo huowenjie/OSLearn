@@ -1,0 +1,8 @@
+// 负数返回 1，否则返回 0
+CHIP Neg16 {
+    IN in[16];
+    OUT out;
+
+    PARTS:
+		And(a = in[15], b = true, out = out);
+}

@@ -1,0 +1,216 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/ALU.hdl
+
+/**
+ * The ALU. Computes one of the following functions:
+ * x+y, x-y, y-x, 0, 1, -1, x, y, -x, -y, !x, !y,
+ * x+1, y+1, x-1, y-1, x&y, x|y on two 16-bit inputs, 
+ * according to 6 input bits denoted zx,nx,zy,ny,f,no.
+ * The bit-combinations that yield each function are 
+ * documented in the book. In addition, the ALU 
+ * computes two 1-bit outputs: if the ALU output
+ * is 0, zr is set to 1; otherwise zr is set to 0;
+ * If out<0, ng is set to 1; otherwise ng is set to 0.
+ */
+
+// Implementation: the ALU manipulates the x and y
+// inputs and then operates on the resulting values, 
+// as follows:
+// if (zx==1) set x = 0        // 16-bit constant
+// if (nx==1) set x = ~x       // bitwise "not"
+// if (zy==1) set y = 0        // 16-bit constant
+// if (ny==1) set y = ~y       // bitwise "not"
+// if (f==1)  set out = x + y  // integer 2's complement addition
+// if (f==0)  set out = x & y  // bitwise "and"
+// if (no==1) set out = ~out   // bitwise "not"
+// if (out==0) set zr = 1
+// if (out<0) set ng = 1
+
+  
+CHIP ALU {
+    IN  
+        x[16], y[16],  // 16-bit inputs        
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute  out = x + y (if 1) or out = x & y (if 0)
+        no; // negate the out output?
+
+    OUT 
+        out[16], // 16-bit output
+        zr, // 1 if (out==0), 0 otherwise
+        ng; // 1 if (out<0),  0 otherwise
+
+    PARTS:
+		//-----------------------------------------------
+		
+		// if zx then x = 0
+		Not(in = zx, out = nzx);
+		And16(
+			a = x,
+			b[0] = nzx, b[1] = nzx, b[2] = nzx, b[3] = nzx,
+			b[4] = nzx, b[5] = nzx, b[6] = nzx, b[7] = nzx,
+			b[8] = nzx, b[9] = nzx, b[10] = nzx, b[11] = nzx,
+			b[12] = nzx, b[13] = nzx, b[14] = nzx, b[15] = nzx,
+			out = tx1
+		);
+
+		// if nx then x = ~x -> nx & ~x + ~nx & x
+		Not(in = nx, out = nnx);
+		Not16(in = tx1, out = ntx1);
+
+		And16(
+			a[0] = nx, a[1] = nx, a[2] = nx, a[3] = nx,
+			a[4] = nx, a[5] = nx, a[6] = nx, a[7] = nx,
+			a[8] = nx, a[9] = nx, a[10] = nx, a[11] = nx,
+			a[12] = nx, a[13] = nx, a[14] = nx, a[15] = nx,
+			b = ntx1,
+			out = tx1Tmp1
+		);
+
+		And16(
+			a[0] = nnx, a[1] = nnx, a[2] = nnx, a[3] = nnx,
+			a[4] = nnx, a[5] = nnx, a[6] = nnx, a[7] = nnx,
+			a[8] = nnx, a[9] = nnx, a[10] = nnx, a[11] = nnx,
+			a[12] = nnx, a[13] = nnx, a[14] = nnx, a[15] = nnx,
+			b = tx1,
+			out = tx1Tmp2
+		);
+		
+		Or16(a = tx1Tmp1, b = tx1Tmp2, out = tx2);
+
+		//-----------------------------------------------
+		
+		// if zy then y = 0
+		Not(in = zy, out = nzy);
+		And16(
+			a = y,
+			b[0] = nzy, b[1] = nzy, b[2] = nzy, b[3] = nzy,
+			b[4] = nzy, b[5] = nzy, b[6] = nzy, b[7] = nzy,
+			b[8] = nzy, b[9] = nzy, b[10] = nzy, b[11] = nzy,
+			b[12] = nzy, b[13] = nzy, b[14] = nzy, b[15] = nzy,
+			out = ty1
+		);
+
+		// if ny then y = ~y -> ny & ~y + ~ny & y
+		Not(in = ny, out = nny);
+		Not16(in = ty1, out = nty1);
+
+		And16(
+			a[0] = ny, a[1] = ny, a[2] = ny, a[3] = ny,
+			a[4] = ny, a[5] = ny, a[6] = ny, a[7] = ny,
+			a[8] = ny, a[9] = ny, a[10] = ny, a[11] = ny,
+			a[12] = ny, a[13] = ny, a[14] = ny, a[15] = ny,
+			b = nty1,
+			out = ty1Tmp1
+		);
+
+		And16(
+			a[0] = nny, a[1] = nny, a[2] = nny, a[3] = nny,
+			a[4] = nny, a[5] = nny, a[6] = nny, a[7] = nny,
+			a[8] = nny, a[9] = nny, a[10] = nny, a[11] = nny,
+			a[12] = nny, a[13] = nny, a[14] = nny, a[15] = nny,
+			b = ty1,
+			out = ty1Tmp2
+		);
+		
+		Or16(a = ty1Tmp1, b = ty1Tmp2, out = ty2);
+		
+		//-----------------------------------------------
+		
+		// if f then out = x + y else out = x & y
+		// f & (x + y) or ~f & (x & y)
+		Add16(a = tx2, b = ty2, out = resAdd);
+		And16(a = tx2, b = ty2, out = resAnd);
+		Not(in = f, out = nf);
+
+		And16(
+			a[0] = f, a[1] = f, a[2] = f, a[3] = f,
+			a[4] = f, a[5] = f, a[6] = f, a[7] = f,
+			a[8] = f, a[9] = f, a[10] = f, a[11] = f,
+			a[12] = f, a[13] = f, a[14] = f, a[15] = f,
+			b = resAdd,
+			out = res1
+		);
+
+		And16(
+			a[0] = nf, a[1] = nf, a[2] = nf, a[3] = nf,
+			a[4] = nf, a[5] = nf, a[6] = nf, a[7] = nf,
+			a[8] = nf, a[9] = nf, a[10] = nf, a[11] = nf,
+			a[12] = nf, a[13] = nf, a[14] = nf, a[15] = nf,
+			b = resAnd,
+			out = res2
+		);
+
+		Or16(a = res1, b = res2, out = tout1);
+		
+		//-----------------------------------------------
+		
+		// if no then out = ~out -> no & ~out + ~no & out
+		Not(in = no, out = nno);
+		Not16(in = tout1, out = ntout1);
+		
+		And16(
+			a[0] = no, a[1] = no, a[2] = no, a[3] = no,
+			a[4] = no, a[5] = no, a[6] = no, a[7] = no,
+			a[8] = no, a[9] = no, a[10] = no, a[11] = no,
+			a[12] = no, a[13] = no, a[14] = no, a[15] = no,
+			b = ntout1,
+			out = outTmp1
+		);
+
+		And16(
+			a[0] = nno, a[1] = nno, a[2] = nno, a[3] = nno,
+			a[4] = nno, a[5] = nno, a[6] = nno, a[7] = nno,
+			a[8] = nno, a[9] = nno, a[10] = nno, a[11] = nno,
+			a[12] = nno, a[13] = nno, a[14] = nno, a[15] = nno,
+			b = tout1,
+			out = outTmp2
+		);
+		
+		Or16(a = outTmp1, b = outTmp2, out = tmpOut);
+
+		//-----------------------------------------------
+
+		// if out == 0 then zr = 1 else zr = 0
+
+		Or16Way(in = tmpOut, out = zrt);
+		Not(in = zrt, out = zr);
+
+		//-----------------------------------------------
+
+		// if out < 0 then ng = 1 else ng = 0
+		Neg16(in = tmpOut, out = ng);
+
+		// 输出 out
+		And16(a = true, b = tmpOut, out = out);
+
+		//-----------------------------------------------
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
