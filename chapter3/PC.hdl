@@ -1,0 +1,69 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t]==1) out[t+1] = 0
+ * else if (load[t]==1)  out[t+1] = in[t]
+ * else if (inc[t]==1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                  out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16], load, inc, reset;
+    OUT out[16];
+
+    PARTS:
+		// reset == 1, 置零
+		// inc = 1, 结果 + 1
+		// load = 1, 赋值
+		// reset、load、inc 任意一个为 1 均会改变寄存器的值
+
+		// load = reset + load + inc
+		Or(a = reset, b = load, out = tmpLoad);
+		Or(a = tmpLoad, b = inc, out = retLoad);
+
+		// in = (reset & false) + nReset & load & in + nReset & nload & inc & (out++)
+		Not(in = reset, out = nReset);
+		And16(
+			a[0] = reset, a[1] = reset, a[2] = reset, a[3] = reset,
+			a[4] = reset, a[5] = reset, a[6] = reset, a[7] = reset,
+			a[8] = reset, a[9] = reset, a[10] = reset, a[11] = reset,
+			a[12] = reset, a[13] = reset, a[14] = reset, a[15] = reset,
+			b = false, out = tmpIn1
+		);
+
+		And(a = nReset, b = load, out = tmpIn21);
+		And16(
+			a[0] = tmpIn21, a[1] = tmpIn21, a[2] = tmpIn21, a[3] = tmpIn21,
+			a[4] = tmpIn21, a[5] = tmpIn21, a[6] = tmpIn21, a[7] = tmpIn21,
+			a[8] = tmpIn21, a[9] = tmpIn21, a[10] = tmpIn21, a[11] = tmpIn21,
+			a[12] = tmpIn21, a[13] = tmpIn21, a[14] = tmpIn21, a[15] = tmpIn21,
+			b = in, out = tmpIn2
+		);
+
+		Not(in = load, out = nLoad);
+		And(a = nReset, b = nLoad, out = tmpIn31);
+		And(a = tmpIn31, b = inc, out = tmpIn32);
+		Inc16(in = regOut, out = tmpIn33);
+		And16(
+			a[0] = tmpIn32, a[1] = tmpIn32, a[2] = tmpIn32, a[3] = tmpIn32,
+			a[4] = tmpIn32, a[5] = tmpIn32, a[6] = tmpIn32, a[7] = tmpIn32,
+			a[8] = tmpIn32, a[9] = tmpIn32, a[10] = tmpIn32, a[11] = tmpIn32,
+			a[12] = tmpIn32, a[13] = tmpIn32, a[14] = tmpIn32, a[15] = tmpIn32,
+			b = tmpIn33, out = tmpIn3
+		);
+
+		// 计算 tmpIn
+		Or16(a = tmpIn1, b = tmpIn2, out = tmpOut1);
+		Or16(a = tmpOut1, b = tmpIn3, out = tmpOut);
+
+		// 存储寄存器，存储上一次运算的结果
+		Register(in = tmpOut, load = retLoad, out = regOut, out = out);
+}
+
+
+
+
