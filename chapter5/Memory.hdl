@@ -27,6 +27,67 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-		RAM16K();
-		
+		/*
+		 * address 0~16383(0x3FFF) 则为数据内存
+		 * address 16384(0x4000)~24575(0x5FFF) 则为屏幕映像
+		 * address 24576(0x6000) 为键盘映像
+		 *
+		 * 那么首先分析一下：
+		 * 1.判断address的最高位是否为1，如果为1，地址必然大于 16383；否则采用 RAM16K 芯片；
+		 * 2.如果address最高位为 1，且次高位为 0；那么地址必然指向屏幕映像区域；否则为键盘映像；
+		 * 3.如果address的最高位和次高位同时为1，且其他的低位只要有任意一个为 1，那么电路输出就是错误的；
+		 */
+
+		// 最高位为 1，nRam 为 0，将 nRam 作为 RAM16K 模块的 load 比较合适
+		Not(in = address[14], out = nRam);
+		And(a = nRam, b = load, out = loadRam);
+
+		RAM16K(in = in, load = loadRam, address = address[0..13], out = tmpOut1);
+		And16(
+			a[0] = nRam, a[1] = nRam, a[2] = nRam, a[3] = nRam,
+			a[4] = nRam, a[5] = nRam, a[6] = nRam, a[7] = nRam,
+			a[8] = nRam, a[9] = nRam, a[10] = nRam, a[11] = nRam,
+			a[12] = nRam, a[13] = nRam, a[14] = nRam, a[15] = nRam,
+			b = tmpOut1,
+			out = out1
+		);
+
+		// 最高位必须为 1 同时次高位必须为 0，Screen 才能正常使用
+		Not(in = address[13], out = nScreen);
+		And(a = nScreen, b = address[14], out = tmpLoadScr);
+		And(a = tmpLoadScr, b = load, out = screenLoad);
+
+		Screen(in = in, load = screenLoad, address = address[0..12], out = tmpOut2);
+		And16(
+			a[0] = tmpLoadScr, a[1] = tmpLoadScr, a[2] = tmpLoadScr, a[3] = tmpLoadScr,
+			a[4] = tmpLoadScr, a[5] = tmpLoadScr, a[6] = tmpLoadScr, a[7] = tmpLoadScr,
+			a[8] = tmpLoadScr, a[9] = tmpLoadScr, a[10] = tmpLoadScr, a[11] = tmpLoadScr,
+			a[12] = tmpLoadScr, a[13] = tmpLoadScr, a[14] = tmpLoadScr, a[15] = tmpLoadScr,
+			b = tmpOut2,
+			out = out2
+		);
+
+		// 最高位次高位全部为 1，剩下位全部为 0，则访问键盘映像
+		Or8Way(in = address[0..7], out = nZero1);
+		Or(a = nZero1, b = address[8], out = nZero2);
+		Or(a = nZero2, b = address[9], out = nZero3);
+		Or(a = nZero3, b = address[10], out = nZero4);
+		Or(a = nZero4, b = address[11], out = nZero5);
+		Or(a = nZero5, b = address[12], out = nZero);
+		Not(in = nZero, out = zeroLoad);
+		And(a = address[14], b = zeroLoad, out = keyLoad1);
+		And(a = address[13], b = keyLoad1, out = keyLoad);
+
+		Keyboard(out = tmpOut3);
+		And16(
+			a[0] = keyLoad, a[1] = keyLoad, a[2] = keyLoad, a[3] = keyLoad,
+			a[4] = keyLoad, a[5] = keyLoad, a[6] = keyLoad, a[7] = keyLoad,
+			a[8] = keyLoad, a[9] = keyLoad, a[10] = keyLoad, a[11] = keyLoad,
+			a[12] = keyLoad, a[13] = keyLoad, a[14] = keyLoad, a[15] = keyLoad,
+			b = tmpOut3,
+			out = out3
+		);
+
+		Or16(a = out1, b = out2, out = tmpOut);
+		Or16(a = out3, b = tmpOut, out = out);
 }

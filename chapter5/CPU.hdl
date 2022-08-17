@@ -1,0 +1,85 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/CPU.hdl
+
+/**
+ * The Central Processing unit (CPU).
+ * Consists of an ALU and a set of registers, designed to fetch and 
+ * execute instructions written in the Hack machine language.
+ * In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM=0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time unit. If reset=1 then the 
+ * CPU jumps to address 0 (i.e. sets pc=0 in next time unit) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A]) 从 Memory 模块读取的输入值
+        instruction[16], // Instruction for execution 从 Rom 获取的指令
+        reset;           // Signals whether to re-start the current 
+                         // program (reset=1) or continue executing
+                         // the current program (reset=0).
+
+    OUT outM[16],        // M value output 写入内存的数据内容
+        writeM,          // Write into M? 是否写入内存的标志位
+        addressM[15],    // Address in data memory (of M) 内存地址
+        pc[15];          // address of next instruction 下一条指令地址
+
+    PARTS:
+		/*
+		 * 先要了解 CPU 中主要包含了什么：
+		 * 1.算数逻辑单元 ALU，计算这些操作：x+y, x-y, y-x, 0, 1, -1, x, y, -x, -y, !x, !y,
+		 *   x+1, y+1, x-1, y-1, x&y, x|y 等； 
+		 * 2.A寄存器，既可以保存地址，也可以保存数据；
+		 * 3.D寄存器，只保存数据；
+		 * 4.解码器单元和其他的控制单元；
+		 * 5.PC 计数器。
+		 *
+		 * 然后分析 CPU 的功能逻辑：
+		 * 1.CPU的核心是围绕指令的解析展开的，在不知道 instruction 为何意的情况下，CPU 并不
+		 *   自动决定下一步做什么；
+		 * 2.那么我们首先从解析指令开始，Hack 机器语言总共有两种命令格式，一种是地址指令格式
+		 *   （A指令）0vvvvvvvvvvvvvvv；另一种是计算指令格式（C指令） 1111acccccdddjjj，其中
+		 *   a 位域和 c 位域说明计算哪个函数，d 位域表示 ALU 将输出存于何处，j 位域则指定了
+		 *   可选的跳转条件；
+		 * 3.
+		 *   
+		 */
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+}
+
+
+
+
+
+
+
+
+
+
+
+
