@@ -48,38 +48,128 @@ CHIP CPU {
 		 * 4.解码器单元和其他的控制单元；
 		 * 5.PC 计数器。
 		 *
-		 * 然后分析 CPU 的功能逻辑：
-		 * 1.CPU的核心是围绕指令的解析展开的，在不知道 instruction 为何意的情况下，CPU 并不
-		 *   自动决定下一步做什么；
-		 * 2.那么我们首先从解析指令开始，Hack 机器语言总共有两种命令格式，一种是地址指令格式
-		 *   （A指令）0vvvvvvvvvvvvvvv；另一种是计算指令格式（C指令） 1111acccccdddjjj，其中
-		 *   a 位域和 c 位域说明计算哪个函数，d 位域表示 ALU 将输出存于何处，j 位域则指定了
-		 *   可选的跳转条件；
-		 * 3.
-		 *   
+		 * 然后分析 CPU 的功能逻辑，核心是指令解析。
+		 * Hack 机器语言总共有两种命令格式，一种是地址指令格式（A指令）0vvvvvvvvvvvvvvv；
+		 * 另一种是计算指令格式（C指令） 111accccccdddjjj，其中 a 位域和 c 位域说明计算哪
+		 * 个函数，d 位域表示 ALU 将输出存于何处，j 位域则指定了可选的跳转条件；
+		 * 对于指令格式的判断，只需要通过 instruction[14] 来决定即可；如果 instruction[15]
+		 * 为 0，则直接将 instruction 存入 A 寄存器；如果 instruction[15] 为 1，则首先检查
+		 * a 是否为 0，如果 a 为 0，则操作 A 和 D 寄存器来运算；如果 a 为 1，则操作 M 和 D
+		 * 进行运算。然后可以根据教材所罗列的 c 位域的含义来决定 ALU 的入参。ALU 计算出结果
+		 * 之后，可以根据 d 位域来决定将值存入 A、D 还是 M。对于 j 位域的解析，则需要配合 ALU
+		 * 的计算结果 zr 和 ng，如果满足跳转条件，pc 计数器将跳转至 A 寄存器指定的地址处，
+		 * 不跳转的情况下 pc 计数器循环自加。
 		 */
+
+		// ---------------------------------------------------
+		// 首先分解指令，如果是 A 指令，解码完毕后将地址存入 A 寄存器
+		// 同时，在 CPU 内部，ALU 计算出来的值也有可能存到 A 寄存器中，所以要分开讨论
+
+		Not(in = instruction[15], out = isrtA);
+
+		// 地址指令的情形，直接缓存指令于 A 寄存器
+		And16(
+			a = instruction,
+			b[0] = isrtA, b[1] = isrtA, b[2] = isrtA, b[3] = isrtA,
+			b[4] = isrtA, b[5] = isrtA, b[6] = isrtA, b[7] = isrtA,
+			b[8] = isrtA, b[9] = isrtA, b[10] = isrtA, b[11] = isrtA,
+			b[12] = isrtA, b[13] = isrtA, b[14] = isrtA, b[15] = isrtA,
+			out = inRegA1
+		);
+
+		// 计算指令的情形，将算数逻辑单元的输出缓存在 A 寄存器
+		And16(
+			a = outAlu,
+			b[0] = instruction[15], b[1] = instruction[15], b[2] = instruction[15], b[3] = instruction[15],
+			b[4] = instruction[15], b[5] = instruction[15], b[6] = instruction[15], b[7] = instruction[15],
+			b[8] = instruction[15], b[9] = instruction[15], b[10] = instruction[15], b[11] = instruction[15],
+			b[12] = instruction[15], b[13] = instruction[15], b[14] = instruction[15], b[15] = instruction[15],
+			out = inRegA2
+		);
+
+		// 如果是 A 指令，则 A 寄存器允许写入
+		// 如果是 C 指令，且 d1 为 1，A 寄存器允许写入
+		Or(a = isrtA, b = instruction[5], out = loadA);
+
+		Or16(a = inRegA1, b = inRegA2, out = inRegA);
+		ARegister(in = inRegA, load = loadA, out = outRegA);
+
+		// ---------------------------------------------------
+
+		// 先通过 a 位域确定两个计算输入，假设 D 寄存器的输出为 outRegD，那么 D 相当于 x， A(或M) 相当于 y
+		Not(in = instruction[12], out = opAflg);
+		And16(
+			a = outRegA,
+			b[0] = opAflg, b[1] = opAflg, b[2] = opAflg, b[3] = opAflg,
+			b[4] = opAflg, b[5] = opAflg, b[6] = opAflg, b[7] = opAflg,
+			b[8] = opAflg, b[9] = opAflg, b[10] = opAflg, b[11] = opAflg,
+			b[12] = opAflg, b[13] = opAflg, b[14] = opAflg, b[15] = opAflg,
+			out = tmpYa
+		);
+		And16(
+			a = inM,
+			b[0] = instruction[12], b[1] = instruction[12], b[2] = instruction[12], b[3] = instruction[12],
+			b[4] = instruction[12], b[5] = instruction[12], b[6] = instruction[12], b[7] = instruction[12],
+			b[8] = instruction[12], b[9] = instruction[12], b[10] = instruction[12], b[11] = instruction[12],
+			b[12] = instruction[12], b[13] = instruction[12], b[14] = instruction[12], b[15] = instruction[12],
+			out = tmpYm
+		);
+		Or16(a = tmpYa, b = tmpYm, out = aluY);
+
+		// 根据真值表，ALU 的各个控制变量相当于 C 指令的 c 位域值
+		ALU(
+			x = outRegD, y = aluY,
+			zx = instruction[11],
+			nx = instruction[10],
+			zy = instruction[9],
+			ny = instruction[8],
+			f  = instruction[7],
+			no = instruction[6],
+			out = outAlu, zr = zeroFlag, ng = negFlag
+		);
 		
+		// ---------------------------------------------------
+
+		// 对于 D 寄存器，则输入只可能为 ALU 的计算结果，控制位为 d2
+		And(a = instruction[15], b = instruction[4], out = loadRegD);
+		DRegister(in = outAlu, load = loadRegD, out = outRegD);
 		
+		// ---------------------------------------------------
+
+		// 根据控制位 d1 决定是否写入内存 M
+		And(a = instruction[15], b = instruction[3], out = memWrite);
+		And(a = memWrite, b = true, out = writeM);
+		And16(
+			a[0] = memWrite, a[1] = memWrite, a[2] = memWrite, a[3] = memWrite,
+			a[4] = memWrite, a[5] = memWrite, a[6] = memWrite, a[7] = memWrite, 
+			a[8] = memWrite, a[9] = memWrite, a[10] = memWrite, a[11] = memWrite, 
+			a[12] = memWrite, a[13] = memWrite, a[14] = memWrite, a[15] = memWrite, 
+			b = outAlu, out = outM
+		);
+		// 读取 A 寄存器的值作为内存地址
+		And16(a = true, b = outRegA, out[0..14] = addressM);
+
+		// ---------------------------------------------------
+
+		// 对于指令计数器，默认情况下自动计算下一条指令的地址，在 j 域被指定的情况下
+		// 执行相应的跳转，跳转的条件需要配合 ALU 的输出 zeroFlag 和 negFlag 来定义
 		
+		// 首先分析 j1，如果 j1 满足，那么 negFlag 必然为 1 才满足跳转条件
+		And(a = instruction[2], b = negFlag, out = j1Cond);
 		
-		
-		
-		
-		
-		
-		
-		
-		
+		// 对于 j2，只需要判断 zeroFlag 即可
+		And(a = instruction[1], b = zeroFlag, out = j2Cond);
+
+		// 对于 j3，必须满足 zeroFlag 为 0，且 negFlag 为 0
+		Not(in = zeroFlag, out = nZeroFlag);
+		Not(in = negFlag, out = nNegFlag);
+		And(a = nZeroFlag, b = nNegFlag, out = j3Tmp);
+		And(a = j3Tmp, b = instruction[0], out = j3Cond);
+
+		Or(a = j1Cond, b = j2Cond, out = jmpTmp);
+		Or(a = jmpTmp, b = j3Cond, out = jmpCond);
+
+		// 同时还要必须满足当前的指令为 C 指令
+		And(a = instruction[15], b = jmpCond, out = jmpLoad);
+		PC(in = outRegA, load = jmpLoad, inc = true, reset = reset, out[0..14] = pc);
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -4,9 +4,9 @@
 chapter1 布尔逻辑  
 
 Nand：基本的与非门，最底层的逻辑单元，所有其他的逻辑门都可以用与非门实现  
-Not：非门，~x  
-And：与门，x & y  
-Or：或门，x | y  
+Not：非门  
+And：与门  
+Or：或门  
 Xor：异或门，同 0 异 1  
 Mux：(Multiplexor)选择器，输入 a，b，sel；sel 为 0，输出 a，否则输出 b  
 DMux：反向选择器，输入 in，sel；sel 为 0，信号从 a 管脚输出，否则从 b 管脚输出  
@@ -48,5 +48,6 @@ Fill.asm：按键渲染，放键清屏
 chapter5 计算机体系结构  
 
 Memory.hdl：内存  
+CPU.hdl：Hack 计算机的中央处理器实现  
 
 
