@@ -49,5 +49,5 @@ chapter5 计算机体系结构
 
 Memory.hdl：内存  
 CPU.hdl：Hack 计算机的中央处理器实现  
-
+Computer：Hack 计算机
 
