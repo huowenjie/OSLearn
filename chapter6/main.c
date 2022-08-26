@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    
+    printf("创建成功！\n");
 
 end:
     if (parser) {
