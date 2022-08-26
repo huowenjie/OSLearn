@@ -1,6 +1,7 @@
 TARGET := HackAsm
 INC_PATH := .
 SRC_PATH := .
+CFLG := -finput-charset=utf-8 -fexec-charset=gbk
 
 # 搜索源文件并获取 .c 文件名列表
 SRC_FILES := $(foreach dir,$(SRC_PATH),$(wildcard $(dir)/*.c))
@@ -22,7 +23,7 @@ vpath %.h $(INC_PATH)
 
 # 定义模式编译规则
 %.o:%.c
-	gcc -g -c $< -o $@ -MD -MP $(INC_PATHS) -Wall
+	gcc -g -c $< -o $@ -MD -MP $(INC_PATHS) -Wall $(CFLG)
 
 # 显式定义目标规则，链接生成最终的可执行程序
 $(TARGET): $(OBJ_FILES)

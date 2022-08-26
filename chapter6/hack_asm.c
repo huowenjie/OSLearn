@@ -60,3 +60,122 @@ struct hack_asm_parser {
  */
 
 /*===========================================================================*/
+
+/* 检查文件名的后缀，以 . 分隔。如果 name 的后缀和 suffix 一致，则返回 1，否则返回 0 */
+int check_name_suffix(const char *name, const char *suffix);
+
+/*===========================================================================*/
+
+HACK_ASM_PARSER *hack_asm_create(const char *file)
+{
+    HACK_ASM_PARSER *parser = NULL;
+    char *name = NULL;
+    size_t len = 0;
+
+    FILE *asm_fp = NULL;
+    FILE *hack_fp = NULL;
+
+    if (!file || !*file) {
+        printf("文件名为空\n");
+        return NULL;
+    }
+
+    if (!check_name_suffix(file, "asm")) {
+        printf("文件不是 asm 格式！\n");
+        return NULL;
+    }
+
+    len = strlen(file) + 2;
+    name = malloc(len);
+    if (!name) {
+        printf("创建缓冲区失败\n");
+        return NULL;
+    }
+    memset(name, 0 , len);
+    strcpy(name, file);
+
+
+err:
+
+    return NULL;
+}
+
+void hack_asm_destroy(HACK_ASM_PARSER *cpl)
+{
+}
+
+int hack_asm_first(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_next(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_line(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_rom_addr(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_is_valid(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_format(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_is_label(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_prep(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+const char *hack_asm_get_instruct(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+int hack_asm_output(HACK_ASM_PARSER *cpl)
+{
+    return 0;
+}
+
+/*===========================================================================*/
+
+int check_name_suffix(const char *name, const char *suffix)
+{
+    const char *p = NULL;
+
+    if (!name || !*name || !suffix || !*suffix) {
+        printf("字符串为空！\n");
+        return 0;
+    }
+
+    p = strrchr(name, '.');
+    if (!p) {
+        return 0;
+    }
+
+    p++;
+    if (strcmp(p, suffix)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/*===========================================================================*/

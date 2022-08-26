@@ -1,29 +1,29 @@
 #include <stdio.h>
-#include "hack_hash.h"
+#include "hack_asm.h"
 
 int main(int argc, char *argv[])
 {
-    HACK_MAP_ITERATOR *it = NULL;
-    HACK_HASH_MAP *map = hack_hash_map_new(0);
+    HACK_ASM_PARSER *parser = NULL;
 
-    hack_hash_map_insert_int(map, "Tom", 10);
-    hack_hash_map_insert_int(map, "Jerry", 10);
-    hack_hash_map_insert_int(map, "Jim", 12);
-    hack_hash_map_insert_int(map, "China", 960);
-    hack_hash_map_insert_int(map, "World", 9999);
+    if (argc < 2) {
+        printf("请输入需要编译的 asm 文件名！\n");
+        goto end;
+    }
 
-    it = hack_hash_map_iterator(map);
-    hack_hash_map_first(it);
+    parser = hack_asm_create(argv[1]);
+    if (!parser) {
+        printf("创建语法解析器失败！\n");
+        goto end;
+    }
 
-    do {
-        const char *key = hack_hash_get_key(it);
-        int data = 0;
+    
 
-        hack_hash_get_int(it, &data);
-        printf("key = %s, data = %d\n", key, data);
-    } while (hack_hash_map_next(it));
+end:
+    if (parser) {
+        hack_asm_destroy(parser);
+    }
 
-    hack_hash_map_clear(map);
-    hack_hash_map_del(map);
+    printf("按回车键结束...\n");
+    getchar();
     return 0;
 }
