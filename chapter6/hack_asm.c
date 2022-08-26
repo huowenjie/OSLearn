@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "hack_link.h"
 #include "hack_hash.h"
@@ -44,6 +45,13 @@ struct hack_asm_parser {
 
     /* 模拟指令内存表，有效指令将会被格式化保存在这个表中 */
     struct hack_rom rom;
+
+    /* 解析缓冲区和长度 */
+    char *buff;
+    int buflen;
+
+    /* 当前实际的行数计数器 */
+    int line_counter;
 };
 
 /**
@@ -72,6 +80,7 @@ HACK_ASM_PARSER *hack_asm_create(const char *file)
     HACK_HASH_MAP *labels = NULL;
     char *name = NULL;
     char *p = NULL;
+    char *buf = NULL;
     size_t len = 0;
 
     FILE *asm_fp = NULL;
@@ -141,6 +150,10 @@ HACK_ASM_PARSER *hack_asm_create(const char *file)
     hack_hash_map_insert_int(labels, "SCREEN", 16384);
     hack_hash_map_insert_int(labels, "KBD", 24576);
 
+    len = 1024;
+    buf = malloc(len);
+    memset(buf, 0, len);
+
     parser = malloc(sizeof(HACK_ASM_PARSER));
     memset(parser, 0 , sizeof(HACK_ASM_PARSER));
 
@@ -148,6 +161,9 @@ HACK_ASM_PARSER *hack_asm_create(const char *file)
     parser->hack_fp = hack_fp;
     parser->label_map = labels;
     parser->rom.cur = NULL;
+    parser->buff = buf;
+    parser->buflen = len;
+    parser->line_counter = 0;
 
     hack_link_reset((struct hack_link *)&parser->rom);
 
@@ -174,82 +190,173 @@ err:
     return NULL;
 }
 
-void hack_asm_destroy(HACK_ASM_PARSER *cpl)
+void hack_asm_destroy(HACK_ASM_PARSER *parser)
 {
-    if (!cpl) {
+    if (!parser) {
         return;
     }
 
     /* TODO 需要首先释放指令内存节点 */
 
-    if (cpl->label_map) {
-        hack_hash_map_clear(cpl->label_map);
-        hack_hash_map_del(cpl->label_map);
-        cpl->label_map = NULL;
+    if (parser->buff) {
+        free(parser->buff);
+        parser->buff = NULL;
+        parser->buflen = 0;
     }
 
-    if (cpl->asm_fp) {
-        fclose(cpl->asm_fp);
-        cpl->asm_fp = NULL;
+    if (parser->label_map) {
+        hack_hash_map_clear(parser->label_map);
+        hack_hash_map_del(parser->label_map);
+        parser->label_map = NULL;
     }
 
-    if (cpl->hack_fp) {
-        fclose(cpl->hack_fp);
-        cpl->hack_fp = NULL;
+    if (parser->asm_fp) {
+        fclose(parser->asm_fp);
+        parser->asm_fp = NULL;
     }
 
-    free(cpl);
+    if (parser->hack_fp) {
+        fclose(parser->hack_fp);
+        parser->hack_fp = NULL;
+    }
+
+    free(parser);
 }
 
-int hack_asm_first(HACK_ASM_PARSER *cpl)
+int hack_asm_first(HACK_ASM_PARSER *parser)
 {
-    if (!cpl) {
+    FILE *asm_fp = NULL;
+    char *buf = NULL;
+    int buflen = 0;
+
+    if (!parser) {
         printf("空指针！\n");
         return -1;
     }
 
-    
+    asm_fp = parser->asm_fp;
+    if (!asm_fp) {
+        printf("尚未打开文件！\n");
+        return -1;
+    }
+
+    rewind(asm_fp);
+
+    buf = parser->buff;
+    buflen = parser->buflen;
+
+    if (!fgets(buf, buflen, asm_fp)) {
+        return -1;
+    }
+
+    parser->line_counter = 1;
     return 0;
 }
 
-int hack_asm_next(HACK_ASM_PARSER *cpl)
+int hack_asm_next(HACK_ASM_PARSER *parser)
+{
+    FILE *asm_fp = NULL;
+    char *buf = NULL;
+    int buflen = 0;
+
+    if (!parser) {
+        printf("空指针！\n");
+        return -1;
+    }
+
+    asm_fp = parser->asm_fp;
+    if (!asm_fp) {
+        printf("尚未打开文件！\n");
+        return -1;
+    }
+
+    buf = parser->buff;
+    buflen = parser->buflen;
+
+    if (!fgets(buf, buflen, asm_fp)) {
+        return -1;
+    }
+
+    parser->line_counter++;
+    return 0;
+}
+
+int hack_asm_line(HACK_ASM_PARSER *parser)
+{
+    if (parser) {
+        return parser->line_counter;
+    }
+    return 0;
+}
+
+int hack_asm_rom_addr(HACK_ASM_PARSER *parser)
+{
+    /* TODO */
+    return 0;
+}
+
+int hack_asm_is_valid(HACK_ASM_PARSER *parser)
+{
+    char *buf = NULL;
+
+    if (!parser) {
+        return 0;
+    }
+
+    buf = parser->buff;
+
+    while (*buf) {
+        if (isgraph(*buf)) {
+            /* 第一个可显示字符 */
+            if (*buf == '/') {
+                char next = *(buf + 1);
+                if (next == '/') {
+                    // 注释无效
+                    return 0;
+                }
+            }
+
+            /* 其余情况有效，这里不检查语法错误 */
+            return 1;
+        }
+
+        buf++;
+    }
+
+    return 0;
+}
+
+const char *hack_asm_check_grammar(HACK_ASM_PARSER *parser)
 {
     return 0;
 }
 
-int hack_asm_line(HACK_ASM_PARSER *cpl)
+int hack_asm_format(HACK_ASM_PARSER *parser)
 {
     return 0;
 }
 
-int hack_asm_rom_addr(HACK_ASM_PARSER *cpl)
+int hack_asm_update(HACK_ASM_PARSER *parser)
 {
     return 0;
 }
 
-int hack_asm_is_valid(HACK_ASM_PARSER *cpl)
+int hack_asm_is_label(HACK_ASM_PARSER *parser)
 {
     return 0;
 }
 
-int hack_asm_format(HACK_ASM_PARSER *cpl)
+int hack_asm_prep(HACK_ASM_PARSER *parser)
 {
     return 0;
 }
 
-int hack_asm_is_label(HACK_ASM_PARSER *cpl)
+const char *hack_asm_get_instruct(HACK_ASM_PARSER *parser)
 {
-    return 0;
-}
-
-int hack_asm_prep(HACK_ASM_PARSER *cpl)
-{
-    return 0;
-}
-
-const char *hack_asm_get_instruct(HACK_ASM_PARSER *cpl)
-{
-    return 0;
+    if (parser) {
+        return parser->buff;
+    }
+    return NULL;
 }
 
 int hack_asm_output(HACK_ASM_PARSER *cpl)

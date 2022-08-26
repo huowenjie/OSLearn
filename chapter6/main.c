@@ -16,7 +16,26 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    printf("创建成功！\n");
+    if (hack_asm_first(parser)) {
+        printf("定位置首行失败！");
+        goto end;
+    }
+
+    do {
+        if (hack_asm_is_valid(parser)) {
+            /* 检查语法错误并输出 */
+            const char *error = hack_asm_check_grammar(parser);
+
+            if (error) {
+                printf("%s\n", error);
+                goto end;
+            }
+
+            hack_asm_format(parser);
+            hack_asm_update(parser);
+            printf("%s\n", hack_asm_get_instruct(parser));
+        }
+    } while (!hack_asm_next(parser));
 
 end:
     if (parser) {
