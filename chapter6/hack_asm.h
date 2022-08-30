@@ -42,16 +42,25 @@ extern int hack_asm_format(HACK_ASM_PARSER *parser);
 /* 将当前的指令更新到指令内存 */
 extern int hack_asm_update(HACK_ASM_PARSER *parser);
 
-/* 当前指令是否是符号 */
+/* 当前指令是否是跳转符号 */
 extern int hack_asm_is_label(HACK_ASM_PARSER *parser);
 
 /* 将当前指令的预定义符号替换为实际的内存地址 */
 extern int hack_asm_prep(HACK_ASM_PARSER *parser);
 
+/* 跳转符号预处理 */
+extern int hack_asm_jmp_prep(HACK_ASM_PARSER *parser);
+
+/* 指令 + 1 */
+extern void hack_asm_instruct_add(HACK_ASM_PARSER *parser);
+
 /* 获取指令字符串 */
 extern const char *hack_asm_get_instruct(HACK_ASM_PARSER *parser);
 
-/* 将机器语言更新到输出文件 */
+/* 将汇编语言转换为机器语言指令 */
+extern int hack_asm_to_bin(HACK_ASM_PARSER *parser);
+
+/* 输出编译好的机器语言 */
 extern int hack_asm_output(HACK_ASM_PARSER *parser);
 
 #ifdef __cplusplus
