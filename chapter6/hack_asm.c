@@ -420,13 +420,19 @@ int hack_asm_format(HACK_ASM_PARSER *parser)
     buf = parser->buff;
     len = parser->buflen;
 
-    for (; i < len - 1 && buf[i]; i++) {
+    while (i < len - 1 && buf[i]) {
         if (!isgraph(buf[i]) || isspace(buf[i])) {            
             for (j = i; buf[j] != '\0' && j < len - 1; j++) {
                 /* 去除所有不可见字符和空白字符 */
                 buf[j] = buf[j + 1];
             }
+
+            if (!isgraph(buf[i]) || isspace(buf[i])) {
+                continue;
+            }
         }
+
+        i++;
     }
 
     /* 检查注释 */
