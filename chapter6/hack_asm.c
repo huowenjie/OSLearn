@@ -344,12 +344,6 @@ int hack_asm_line(HACK_ASM_PARSER *parser)
     return 0;
 }
 
-int hack_asm_rom_addr(HACK_ASM_PARSER *parser)
-{
-    /* TODO */
-    return 0;
-}
-
 int hack_asm_is_valid(HACK_ASM_PARSER *parser)
 {
     char *buf = NULL;
@@ -433,6 +427,22 @@ int hack_asm_format(HACK_ASM_PARSER *parser)
                 buf[j] = buf[j + 1];
             }
         }
+    }
+
+    /* 检查注释 */
+    while (*buf) {
+        if (isgraph(*buf)) {
+            /* 第一个可显示字符 */
+            if (*buf == '/') {
+                char next = *(buf + 1);
+                if (next == '/') {
+                    *buf = '\0';
+                    break;
+                }
+            }
+        }
+
+        buf++;
     }
 
     return 0;

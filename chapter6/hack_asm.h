@@ -27,9 +27,6 @@ extern int hack_asm_next(HACK_ASM_PARSER *parser);
 /* 获取当前指令的行数 */
 extern int hack_asm_line(HACK_ASM_PARSER *parser);
 
-/* 获取当前指令的指令内存地址 */
-extern int hack_asm_rom_addr(HACK_ASM_PARSER *parser);
-
 /* 当前指令是否有效，如果是，返回 1；否则返回 0 */
 extern int hack_asm_is_valid(HACK_ASM_PARSER *parser);
 
