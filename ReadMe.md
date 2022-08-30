@@ -51,3 +51,9 @@ Memory.hdl：内存
 CPU.hdl：Hack 计算机的中央处理器实现  
 Computer：Hack 计算机
 
+##
+chapter6 汇编编译器  
+这个 HackAsm 编译器我用 C 语言实现，仅仅简单测了一下其编译功能。  
+用法：  
+1.执行 make 编译项目；  
+2.执行 ./HackAsm XXX.asm 即可输出对应的机器码文件 XXX.hack
