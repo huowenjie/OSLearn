@@ -1,7 +1,11 @@
 TARGET := HackAsm
 INC_PATH := .
 SRC_PATH := .
-#CFLG := -finput-charset=utf-8 -fexec-charset=gbk
+IS_WIN ?= yes
+
+ifeq ($(IS_WIN),yes)
+CFLG := -finput-charset=utf-8 -fexec-charset=gbk
+endif
 
 # 搜索源文件并获取 .c 文件名列表
 SRC_FILES := $(foreach dir,$(SRC_PATH),$(wildcard $(dir)/*.c))
